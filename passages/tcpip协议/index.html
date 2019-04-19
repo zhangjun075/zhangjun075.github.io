@@ -8,12 +8,12 @@
   
   
   
-  <title>分布式任务调度框架brave-dis-job | braveheart-博客</title>
+  <title>TCP/IP协议 | braveheart-博客</title>
 
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
   
-    <meta name="keywords" content="分布式,分布式,zookeeper,">
+    <meta name="keywords" content="网络,tcp/ip,网络协议,">
   
 
   <script>
@@ -205,7 +205,7 @@
 
 <div class="post">
   <h1 class="article-title">
-    <span>分布式任务调度框架brave-dis-job</span>
+    <span>TCP/IP协议</span>
   </h1>
   <div class="article-top-meta">
     <span>
@@ -215,14 +215,14 @@
     
       <span>
         分类 : 
-          <a href="/categories/分布式/">
-            分布式
+          <a href="/categories/网络/">
+            网络
           </a>
       </span>
     
     
       <span>
-        浏览 : <span class="article-timer" data-identity="brave-dis-job"></span>
+        浏览 : <span class="article-timer" data-identity="tcpip协议"></span>
       </span>
     
   </div>
@@ -231,49 +231,63 @@
 
   <div class="article-content">
     <div class="markdown-body">
-      <p></p>
-<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>目前在负责的一个系统，总是隔三差五出事情。核心的业务逻辑全部通过定时任务来跑，且定时任务没有做集群部署，分布式调度处理。再加上开发人员不太注意代码质量和性能，所以处处是坑。</p>
-<p>之前和团队说过很多次，要把任务拆分出来。但是，最后他们总是以各种理由拖着没做。痛定思痛，我决定自己写一个。</p>
-<p>可能很多人会说现在任务调度的框架那么多，比如es-job，tb-scheduler这个半成品，还有xxl-job，直接拿来用不就行了？可是我想说，你要用一个人家的东西，基本的前提就是要熟悉这个东西怎么用，各个配置代表什么意思，出了问题后，要能解决问题，如果不满足要求，要能定制。那么试问，谁能全部做到？这个学习和改造的成本有多高？所以，基于我对分布式任务调度框架的理解，写了个简单的平台。</p>
-<h2 id="定时任务总结"><a href="#定时任务总结" class="headerlink" title="定时任务总结"></a>定时任务总结</h2><p>差不多定时任务经历了如下几个时代(不熟悉的朋友可以看我前面的介绍)：</p>
+      <h2 id="目的"><a href="#目的" class="headerlink" title="目的"></a>目的</h2><p>让大家了解TCP/IP的基本概念和一些原理，在实际运用中知道具体问题所在。同时在面试的时候，也不至于被面试官鄙视。</p>
+<h2 id="分层"><a href="#分层" class="headerlink" title="分层"></a>分层</h2><p><img src="/images/level.png" alt></p>
 <ul>
-<li>quartz时代-集群部署</li>
-<li>scheduler和timer时代-单独部署</li>
-<li>tbscheduler、esjob、xxl-job时代-分布式调度</li>
+<li><strong>链路层</strong>：数据链路层或者网络接口层，通常包括操作系统中的设备驱动程序和计算机中对应的网络接口卡。</li>
+<li><strong>网络层</strong>：包括IP协议，ICMP协议，及IGMP协议。</li>
+<li><strong>传输层</strong>：主要为两台主机上的应用程序提供端到端的通信。包括TCP协议(传输控制协议)和UDP协议(用户数据报协议)。</li>
+<li><strong>应用层</strong>：处理特定应用程序细节，包括如下：<ul>
+<li>telnet远程登陆</li>
+<li>ftp文件传输协议。</li>
+<li>smtp简单邮件传输协议。</li>
+<li>snmp简单网络管理协议。</li>
 </ul>
-<p>08年左右，quartz在企业级应用较多，那个时候配合数据库(oracle)建立很多张表，来实现任务的集群部署方式。基本原理，是通过数据库锁，实现任务的争用，保证某个时间段，只有一个节点执行任务。那个时候，基本做到了任务和应用不需要单独分离。只要在应用中配置好定时任务，就可以了。<br>优点：不需要单独考虑任务的部署。<br>缺点：实现复杂，维护成本高。</p>
-<p>10年左右，电商经过两年多的发展，去存储过程，去函数，将所有的逻辑放在代码中实现。存储过程不多，但是都是单独部署。比较典型的就是那个时候的一号店。12年左右，开始引入分布式任务调度框架。我也就是从那个时候开始接触tbscheduler，并开始学习他，改写他。<br>优点：任务和业务分离。单独部署。<br>缺点：任务单独部署，不支持集群，存在单点。且需要单独维护，增加维护成本。</p>
-<p>随后的几年，分布式任务调度框架推陈出新，这个时候大家已经不用自己造轮子了。直接拿来主义就行。任务支持集群方式部署，分布式方式调用。</p>
-<h2 id="定时任务注意点"><a href="#定时任务注意点" class="headerlink" title="定时任务注意点"></a>定时任务注意点</h2><p>这里，我想说的是，不管你的任务是分布式部署，还是单点部署，还是其他任何方式部署，有一件事情，你必须要做到位：幂等。</p>
-<p>这里再啰嗦一句，度娘解释幂等：重复做一件事，得到的结果都是一样的。谁还不知道幂等的，可以闭门思过了。</p>
-<p>所以，你幂等做好了，无论任务错跑了，跑挂了你要重跑了，都无所谓。因为你无论来多少次，我数据不会出错。</p>
-<p>其次，我想说的是任务的监控。很多人不愿意写任务运行日志，就像很多人写代码，在关键地方，不想着打点日志看看效果(当然，打日志也要慎重，因为日志打多了，会影响性能)。通过日志，我们能实时监控定时任务的运行情况，并适当的增加报警和重发机制。</p>
-<p>最后，我想告诫下年轻人：最事情一定要给自己留点余地。所以，在系统中留个后门，可以让自己手工触发。通过curl命令或者其他方式。</p>
-<p>总结下三点：1、幂等；2、日志轨迹；3、手工入口。</p>
-<h2 id="设计思路"><a href="#设计思路" class="headerlink" title="设计思路"></a>设计思路</h2><ul>
-<li>废话讲了很多，下来看下es-job的架构图：<br><img src="/images/es-job.png" alt></li>
+</li>
 </ul>
-<p>这里，我们着重看下es-job-lite部分：<br>其实包含了如下几块：<br>1、online-register<br>2、scheduler-trigger<br>3、leader election<br>4、shared<br>5、execution<br>6、failover</p>
-<p>其他的都暂时可以忽略，我们每个人都能做。都属于边缘功能。<br>分别来解释下大概的原理：<br>1、online-register：注册服务节点，一般会在zk上写很多节点信息。这个一般是框架前置工作。<br>2、scheduler-trigger:任务触发，单独来任务的触发方式，通过接口或者继承来实现，平台化一般都会做这种事。<br>3、leader-election：分布式任务调度，要来做shard,你必须选出一个人领导者来做。这是事情就像中国的一党专政一样，共产党来安排，其他人根据安排的结果来执行就行。如果多个政党来安排，那不是天下大乱了。<br>4、shared：看字面意思，我不多解释。<br>5、execution：还是看字面意思。<br>6、failover：这个做的不错，任务支持failover。失败了，能有备选方案，接着来完成。不过理解了思路，我们也能搞定。</p>
-<p>我在想，一个完整的分布式任务调度框架，基本 也就这么多了吧。</p>
-<p>看了上面这么多，不知道大家对分布式任务调度的思路理解的怎么样了。如果还不清楚，你就去扒人家源码吧。</p>
+<p>tcp和udp都使用IP作为网络层协议。</p>
+<p>虽然tcp使用的是不可靠的IP服务，但是它却提供了一种可靠的传输层服务。与tcp不同的是udp，它是不可靠的，他不能保证数据报能安全无误的到达最终目的地。</p>
+<p>ICMP是IP协议的附属协议，IP层用它来与其他主机或者路由器交换错误报文或者其他重要信息。</p>
+<p>TGMP是Internet组管理协议。它用来把一个UDP数据报多播到多个主机。</p>
+<p>ARP(地址解析)和RARP(逆地址解析)是某些网络接口使用的特殊协议。用来转换IP层和网络接口层使用的地址。</p>
+<p><img src="/images/level2.png" alt></p>
+<h2 id="IP网际协议"><a href="#IP网际协议" class="headerlink" title="IP网际协议"></a>IP网际协议</h2><p>IP是TCP/IP协议族中最为核心的协议。</p>
+<p><strong>不可靠(unreliable)</strong>的意思是她不能保证IP数据报能成功到达目的地。IP仅提供最好的传输服务。如果发狠错误的时候，IP简单的处理方式：丢弃该报文数据，然后发送一个ICMP 报文给信源端。任何可靠的服务必须由上层来提供，如TCP。</p>
+<p><strong>无连接(connectionless)</strong>意思是IP并不维护任何关于后续数据报的状态信息。每个数据都是相互独立的，这也说明，对于IP数据报的接收也并非按照发送的顺序的。</p>
 <ul>
-<li><p>brave-dis-job设计思路<br><img src="/images/brave-dis-job.png" alt><br>大体思路一致。</p>
+<li><p>IP首部<br><img src="/images/iphead.png" alt><br>默认IP首部为20个字节。20个字节包含的具体如上图，其中32位的源和目的IP地址也在其中。</p>
 </li>
-<li><p>配置中心采用zk集群。客户端用apache的curator。</p>
+<li><p>IP数据报最长可以达65535直接，虽然可以传送一个65535字节的IP数据报，但是大多数链路层都会对他进行分片，而且主机要求不能接受超过576字节的数据包。</p>
 </li>
-<li><p>任务的触发，简易的采用scheduler。但是对于worker的执行，采用了工厂模式。</p>
+<li><p>IP路由选择<br>当IP数据报从上层发过来以后，就搜索路由表，发现目的IP地址。<br>如果当前IP地址不在同一个网络，那么就发往当前的路由器地址，路由器地址收到报文请求后，再搜索路由表，看下一跳地址，如果找不到，那么就发往默认的下一跳的路由表。如此进行。所以IP地址的转发是hop-to-hop的，也就是说逐跳进行的。</p>
 </li>
-<li><p>leader-election，这里其实没有做选举，采用的是锁的方式来搞定的。谁先争抢到了锁，谁就有权分配任务。</p>
+<li><p>子网寻址<br>所有的主机都要支持子网编址。不是把IP地址单纯的划分成网络号和主机号，而是把主机号再划分成子网号和主机号。<br><img src="/images/B.png" alt></p>
 </li>
-<li><p>分配任务有两种方式：round-robin和平均切片的方式。由于我涉及到的系统的特殊性，我采用了平均切片的方式。</p>
+<li><p>子网掩码<br>除了IP地址以外，主机还需要知道有多少Bit是用于子网号，及多少用于主机号。这个就是通过子网掩码来确定的。这个掩码是一个32bit的值，其中值为1 的bit留给网络和子网号，为0的留给主机号。<br><img src="/images/yanme.png" alt></p>
 </li>
 </ul>
-<p>这里有一个注意点：之前在跑任务的时候，会遇到集群中的机器，启动的时间点不一致，导致其实每半个小时一次的任务，会在启动的时候，可能连续跑多次。那是和机器发布的组数有关系的。所以为了防止这种情况出现。增加了任务的执行记录，记录到zk中。如果当前有任务在跑，不再重复执行本次任务。</p>
-<p>我们来看下zk上被写入的信息有哪些：<br><img src="/images/zookeeper.png" alt></p>
-<p>demo1任务在启动后，会有个demo1的节点,节点下就是可以执行这个任务的机器列表。<br>同时会有一个demo1-lock,lock下面记录下正在执行的任务数。如果这个节点下，还有子节点，本demo1任务不会再次执行。知道该节点下没有任何任务为止。</p>
-<h2 id="代码解析"><a href="#代码解析" class="headerlink" title="代码解析"></a>代码解析</h2><p><a href="https://link.jianshu.com/?t=https%3A%2F%2Fgithub.com%2Fzhangjun075%2Fbrave-dis-job" target="_blank" rel="noopener">brave-dis-job源码地址</a></p>
-<h2 id="后续迭代方向"><a href="#后续迭代方向" class="headerlink" title="后续迭代方向"></a>后续迭代方向</h2><p>1、任务控制台<br>2、通过控制台配置启动参数<br>3、执行日志展示<br>4、报警监控<br>5、任务的failover机制<br>6、更好的平台化</p>
+<h2 id="TCP传输控制协议"><a href="#TCP传输控制协议" class="headerlink" title="TCP传输控制协议"></a>TCP传输控制协议</h2><p>TCP建立IP层之上，提供面向连接的，可靠的直接流服务。</p>
+<p>面向连接意味着tcp双方首先要建立一个连接。其次在此连接之上进行通信。</p>
+<p><strong>tcp提供可靠性的方法：</strong><br>1、分块：应用数据被分块传输，分割成tcp认为最适合发送的数据块。<br>2、重发：tcp发出一个报文后，会启动一个定时器，等待目的段回复是否收到，如果没有收到，将启动重发机制。<br>3、应答：当TCP一端收到另外一端的TCP数据报后，将会发送一个确认，这个确认不是立即发送，而是推迟几分之一秒。<br>4、校验：TCP将保持它首部和数据的校验和，这是一个端到端的校验和，目的是检测数据在传输过程中的任何变化。如果有差错，将丢弃这个报文段不进行确认收到。<br>5、去重：tcp接收端会丢弃掉重复的数据。<br>6、流控：tcp连接的每一方都有固定大小的缓冲空间。TCP的接收端只允许另外一端发送接收端缓冲区所能容纳的数据。</p>
+<ul>
+<li>TCP首部<br>TCP被封装在一个IP报文内。<br><img src="/images/tcp.png" alt></li>
+</ul>
+<p>TCP 首部是16位的源端口号和16位的目的端口号<br><img src="/images/tcp1.png" alt></p>
+<p>tcp提供全双工的服务，这意味着数据能在两个方向上独立的进行传输。在tcp首部中有6个标志的bit：<br>1、URG:紧急指针<br>2、ACK：确认序号有效。<br>3、PSH：接收方应该尽快将这个报文交给应用层。<br>4、RST：重建连接。<br>5、SYN：同步序号用来发起一个连接。<br>6、FIN：发端完成发送任务。</p>
+<h2 id="TCP建立与终止"><a href="#TCP建立与终止" class="headerlink" title="TCP建立与终止"></a>TCP建立与终止</h2><ul>
+<li>我们可以采用tcpdump来观察在建立tcp连接的时候，究竟发生了什么：<br>Tcpdump tcp port xx可以监控报文的通讯情况。</li>
+</ul>
+<p><img src="/images/connect.png" alt><br>1、请求端发送一个SYN段指明客户打算连接到服务器端口，以及一个初始的ISN序号，这里是14155311521，报文段1.<br>2、服务端发挥包含服务器的的初始序号SYN报文作为应答。同时将确认需要设置成客户的ISN+1对客户的SYN进行回复确认。一个SYN占用一个序号。<br>3、客户必须将确认序号设置成服务器的ISN+1对服务器SYN报文进行回复确认。<br>通过这三个报文完成连接的建立。也称为<strong>3次握手</strong>。</p>
+<ul>
+<li>连接的终止<br>终止一个连接需要经过4次握手，这个是由于<strong>TCP的半关闭</strong>造成的。因为TCP是全双工的，因此每个端都需要单独进行关闭。原则就是当一方完成数据的发送后，就发送一个FIN来终止这个方向的连接。当另外一端收到这个FIN后，他必须通知应用层另一端已经终止了那个方向的数据传送。</li>
+</ul>
+<p>收到一个FIN后只意味着这一方向上没有数据流动，一个TCP连接在收到一个FIN后仍能发送数据。<br><img src="/images/off.png" alt></p>
+<h2 id="2MSL等待状态"><a href="#2MSL等待状态" class="headerlink" title="2MSL等待状态"></a>2MSL等待状态</h2><p><strong>TIME_WAIT</strong>状态也称为2MSL状态。<br><strong>2MSL(maxsmum segment lifetime)报文段最大生存时间。</strong><br>TCP报文段以IP报文数据在网络内传输，而IP数据则有限制其生存时间的TTL字段。<br><strong>RFC 793[Postel 1981c] 指出MSL为2分钟。实现中的常用值是30秒，一分钟或者两分钟。</strong></p>
+<p>对于一个具体给定的MSL值，处理的原则是：当TCP执行一个主动关闭，并发回最后一个ACK，该链接必须在TIME——WAIT状态停留的时间为2倍的MSL。这样可以让TCP再次发送最后的ACI以防止这个ACK丢失(另一端超时并重发最后的FIN)。</p>
+<p>这种2MSL的等待另一个结果是这个tcp连接在2MSL等待时间，定义这个连接的插口不能再被使用。这个连接只能在2MSL结束后才能再被使用。</p>
+<p><strong>CLOSE_WAIT概念</strong><br>CLOSE_WAIT是被动关闭连接是形成的。根据TCP状态机，服务器端收到客户端发送的FIN，则按照TCP实现发送ACK，因此进入CLOSE_WAIT状态。但如果服务器端不执行close()，就不能由CLOSE_WAIT迁移到LAST_ACK，则系统中会存在很多CLOSE_WAIT状态的连接。此时，可能是系统忙于处理读、写操作，而未将已收到FIN的连接，进行close。此时，recv/read已收到FIN的连接socket，会返回0。</p>
+<h2 id="工具的使用"><a href="#工具的使用" class="headerlink" title="工具的使用"></a>工具的使用</h2><h3 id="netstat"><a href="#netstat" class="headerlink" title="netstat"></a>netstat</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">-a 列出所有链接</span><br><span class="line"></span><br><span class="line"> -t 选项列出 TCP 协议的连接</span><br><span class="line">-u 选项列出 UDP 协议的连接</span><br><span class="line">-n 选项禁用域名解析功能 </span><br><span class="line">-l 选项列出正在监听的套接字  注意：不要使用 -a 选项，否则 netstat 会列出所有连接，而不仅仅是监听端口。</span><br><span class="line">-p 选项查看进程信息</span><br><span class="line">-ep 选项可以同时查看进程名和用户名</span><br><span class="line">-c 选项持续输出信息</span><br><span class="line">-g 会输出 IPv4 和 IPv6 的多播组信息</span><br><span class="line"></span><br><span class="line">netstat -atnp | grep ESTA   ：active 状态的套接字连接用 &quot;ESTABLISHED&quot; 字段表示，所以我们可以使用 grep 命令获得 active 状态的连接</span><br><span class="line">配合 watch 命令监视 active 状态的连接：</span><br><span class="line">watch -d -n0 &quot;netstat -atnp | grep ESTA&quot;</span><br><span class="line">-n # 或--interval  watch缺省每2秒运行一下程序，可以用-n或-interval来指定间隔的时间。</span><br><span class="line">-d # 或--differences  用-d或--differences 选项watch 会高亮显示变化的区域。 而-d=cumulative选项会把变动过的地方(不管最近的那次有没有变动)都高亮显示出来。</span><br><span class="line">-t # 或-no-title  会关闭watch命令在顶部的时间间隔,命令，当前时间的输出。</span><br><span class="line">-h, --help # 查看帮助文档</span><br></pre></td></tr></table></figure>
+<h3 id="lsof"><a href="#lsof" class="headerlink" title="lsof"></a>lsof</h3><p>lsof -nP -iTCP:端口号 -sTCP:LISTEN</p>
     </div>
   </div>
   
@@ -284,7 +298,7 @@
         
           本文作者 : braveheart <br>
         
-        原文链接 : <a href>https://zhangjun075.github.io/passages/brave-dis-job/</a><br>
+        原文链接 : <a href>https://zhangjun075.github.io/passages/tcpip协议/</a><br>
         版权声明 : 本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！
         </blockquote>
       </div>
@@ -344,14 +358,14 @@
           <i class="iconfont icon-06tags"></i>标签: 
           
           <span class="span--tag">
-            <a href="/tags/分布式/">
-              #分布式
+            <a href="/tags/tcp-ip/">
+              #tcp/ip
             </a>
           </span>
           
           <span class="span--tag">
-            <a href="/tags/zookeeper/">
-              #zookeeper
+            <a href="/tags/网络协议/">
+              #网络协议
             </a>
           </span>
           
@@ -376,15 +390,9 @@
       <div class="nav-pre">
         <i class="iconfont icon-prev"></i>
         上一篇:
-        <a href="/passages/hexo启动报错/" target="_self">hexo启动报错</a>
+        <a href="/passages/brave-dis-job/" target="_self">分布式任务调度框架brave-dis-job</a>
       </div>
     
-    
-      <div class="nav-next">
-        下一篇:
-        <a href="/passages/tcpip协议/" target="_self">TCP/IP协议</a>
-        <i class="iconfont icon-next"></i>
-      </div>
     
   </nav>
 

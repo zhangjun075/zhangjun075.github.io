@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+  
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  <meta name="author" content="董沅鑫, yuanxin.me@gmail.com">
+  
+  
+  
+  <title>springboot启动分析 | braveheart-博客</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="springboot,springboot,java,">
+  
+
+  <script>
+    console.log('\n%c Hexo-theme-bmw v4.0 ' + '%c 🎉 https://github.com/dongyuanxin/theme-bmw 🎉\n' + '\n%c View demo online ' + '%c 🔍 https://godbmw.com/ 🔍  \n' , 'color: #fadfa3; background: #030307; padding:3px 0;', '', 'color: #fadfa3; background: #030307; padding:3px 0;', '');
+  </script>
+
+  
+    <meta name="description" content="留不住的是时光，放不下的是梦想">
+  
+
+  
+
+  
+    <link rel="icon" href="/images/favicon.ico">
+    <link rel="apple-touch-icon" href="/images/touch-icon.png">
+  
+
+  <link href="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/icon/iconfont.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+
+  <script src="/js/util.js"></script>
+<script src="/js/valine.min.js"></script>
+
+  
+
+  
+    <link href="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.css" rel="stylesheet">
+    <script src="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.js" async></script>
+  
+
+  
+    <link href="https://cdn.bootcss.com/social-share.js/1.0.16/css/share.min.css" rel="stylesheet">
+  
+  
+  <script src="//cdn.bootcss.com/jquery/3.3.1/jquery.min.js" async></script>
+  
+  
+    <script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.11.0/dist/av-min.js"></script>
+  
+
+</head>
+  <script src="/js/hexo_resize_image.js"></script>
+  <body>
+
+    
+
+    <div id="app">
+
+      <div class="header-wrap">
+  <header>
+    <div class="site-brand">
+      <div class="site-title">
+        <a href="/">勇敢的心</a>
+      </div>
+    </div>
+    <nav class="site-navigation">
+      <ul class="nav-menu">
+      
+        <li class="nav-item" data-path="/">
+          
+            <a href="/" target="_self">
+              主页
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          
+            <a href="/archives/" target="_self">
+              归档
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path="/categories/">
+          
+            <a href="/categories/" target="_self">
+              分类
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path="/tags/">
+          
+            <a href="/tags/" target="_self">
+              标签
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path="/friends/">
+          
+            <a href="/friends/" target="_self">
+              友链
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path="/about/">
+          
+            <a href="/about/" target="_self">
+              关于
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path>
+          
+            <a href="javascript:void(0);" v-else>精彩链接</a>
+            <ul class="nav-menu--dropdown">
+              
+                <li>
+                  <a href="https://github.com/zhangjun075" target="_blank">
+                    Github
+                  </a>
+                </li>
+              
+                <li>
+                  <a href="https://www.jianshu.com/u/5783822e001b" target="_blank">
+                    jianshu
+                  </a>
+                </li>
+              
+                <li>
+                  <a href="https://zhangjun075.github.io/learning/" target="_blank">
+                    笔记
+                  </a>
+                </li>
+              
+            </ul>
+          
+        </li>
+      
+      </ul>
+    </nav>
+    <i class="iconfont icon-menu"></i>
+  </header>
+</div>
+
+<script>
+  let links = document.querySelectorAll('.nav-item');
+  for(let link of links){
+    let childrenLink = link.querySelector('ul');
+    link.addEventListener('mouseenter', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown active";
+      }
+    })
+    link.addEventListener('mouseleave', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown";
+      }
+    })
+  }
+  let rootRealPath = getRealPath(window.location.pathname, true);
+  for(let link of links) {
+    let linkPath = link.getAttribute("data-path");
+    if(linkPath && getRealPath(linkPath, true) === rootRealPath) {
+      link.className = "nav-item hover";
+    }
+  }
+
+  let iconMenu = document.querySelector("i.iconfont.icon-menu"),
+    iconMenuClicked = false;
+  let navDOM = document.querySelector("nav.site-navigation");
+  iconMenu.addEventListener("click", () => {
+    iconMenuClicked 
+      ? navDOM.className = "site-navigation active"
+      : navDOM.className = "site-navigation";
+    iconMenuClicked = !iconMenuClicked;
+  })
+</script>
+
+      
+
+
+
+
+
+
+
+
+<div class="container post-index">
+
+  
+
+<div class="post">
+  <h1 class="article-title">
+    <span>springboot启动分析</span>
+  </h1>
+  <div class="article-top-meta">
+    <span>
+      发布 : 
+      2019-04-19
+    </span>
+    
+      <span>
+        分类 : 
+          <a href="/categories/springboot/">
+            springboot
+          </a>
+      </span>
+    
+    
+      <span>
+        浏览 : <span class="article-timer" data-identity="springboot启动分析"></span>
+      </span>
+    
+  </div>
+
+  
+
+  <div class="article-content">
+    <div class="markdown-body">
+      <h2 id="调用层级图"><a href="#调用层级图" class="headerlink" title="调用层级图"></a>调用层级图</h2><p>首先双手奉上调用关系层级图<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">@SpringBootApplication</span><br><span class="line">    |--@SpringBootConfiguration</span><br><span class="line">    |--@EnableAutoConfiguration</span><br><span class="line">        |--@Import(AutoConfigurationImportSelector.class)</span><br><span class="line">        </span><br><span class="line"></span><br><span class="line">SpringApplication#构造函数</span><br><span class="line">    |--new SpringApplication():</span><br><span class="line">        |--deduceWebApplicationType():WebApplicationType</span><br><span class="line">        |--setInitializers():META-INF/spring.factories中注册所有的ApplicationListener</span><br><span class="line">        |--setListeners():</span><br><span class="line">        |--deduceMainApplicationClass():Class&lt;?&gt;</span><br><span class="line">        </span><br><span class="line"></span><br><span class="line">SpringApplication#run</span><br><span class="line">    |--SpringApplication#configureHeadlessProperty():</span><br><span class="line">    |--SpringApplication#getRunListeners():返回SpringApplicationRunListeners</span><br><span class="line">        |--SpringApplicationRunListeners#构造函数：是SpringApplicationRunListener的集合。</span><br><span class="line">            |--SpringApplication#getSpringFactoriesInstances():</span><br><span class="line">                |--SpringFactoriesLoader#loadFactoryNames():EventPublishingRunListener从META-INF/spring.factories文件中获取SpringApplicationRunListener,这个时候实例化EventPublishingRunListener</span><br><span class="line">                    |--EventPublishingRunListener#xxxxx:pubilshEvent</span><br><span class="line">    </span><br><span class="line">    |--SpringApplicationRunListeners#starting():</span><br><span class="line">        |--SpringApplicationRunListener#starting()  </span><br><span class="line">    |--DefaultApplicationArguments#构造函数():ApplicationArguments</span><br><span class="line">    |--SpringApplication#prepareEnvironment(listeners,applicationArguments):ConfigurableEnvironment</span><br><span class="line">    |--SpringApplication#configureIgnoreBeanInfo(environment):</span><br><span class="line">    |--SpringApplication#printBanner(environment):</span><br><span class="line">    |--SpringApplication#createApplicationContext():ConfigurableApplicationContext</span><br><span class="line">    |--SpringApplication#getSpringFactoriesInstances():exceptionReporters</span><br><span class="line">    |--SpringApplication#prepareContext()</span><br><span class="line">    |--SpringApplication#refreshContext()</span><br><span class="line">    |--SpringApplication#afterRefresh()</span><br><span class="line">    |--StartupInfoLogger#构造函数()</span><br><span class="line">    |--SpringApplicationRunListeners#started()</span><br><span class="line">    |--SpringApplication#callRunners():</span><br><span class="line">    |--SpringApplicationRunListeners#running()</span><br></pre></td></tr></table></figure></p>
+<h2 id="main函数"><a href="#main函数" class="headerlink" title="main函数"></a>main函数</h2><p><strong>SpringApplication.run(SampleBootstrap.class, args)</strong></p>
+<ul>
+<li><p>跟进这个函数，我们看到如下方法：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">public static ConfigurableApplicationContext run(Class&lt;?&gt;[] primarySources,</span><br><span class="line">            String[] args) &#123;</span><br><span class="line">        return new SpringApplication(primarySources).run(args);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>关于这个我们方法我们拆开来看：</p>
+<ul>
+<li>new SpringApplication();</li>
+<li>SpringApplication.run();</li>
+</ul>
+</li>
+</ul>
+<h3 id="SpringApplicaiton实例化"><a href="#SpringApplicaiton实例化" class="headerlink" title="SpringApplicaiton实例化"></a>SpringApplicaiton实例化</h3><p><strong>最终调用的是这个方法：</strong><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line">     * Create a new &#123;@link SpringApplication&#125; instance. The application context will load</span><br><span class="line">     * beans from the specified primary sources (see &#123;@link SpringApplication class-level&#125;</span><br><span class="line">     * documentation for details. The instance can be customized before calling</span><br><span class="line">     * &#123;@link #run(String...)&#125;.</span><br><span class="line">     * @param resourceLoader the resource loader to use</span><br><span class="line">     * @param primarySources the primary bean sources</span><br><span class="line">     * @see #run(Class, String[])</span><br><span class="line">     * @see #setSources(Set)</span><br><span class="line">     */</span><br><span class="line"></span><br><span class="line">//第266行：创建一个SpringApplcation的实例</span><br><span class="line">public SpringApplication(ResourceLoader resourceLoader, Class&lt;?&gt;... primarySources) &#123;</span><br><span class="line">        //这里resourceLoader是Null的。</span><br><span class="line">        this.resourceLoader = resourceLoader;</span><br><span class="line">        Assert.notNull(primarySources, &quot;PrimarySources must not be null&quot;);</span><br><span class="line">        //primarySources就是启动类，一个set集合，按照目前的的例子来说，就是SampleBootstrap.class</span><br><span class="line">        this.primarySources = new LinkedHashSet&lt;&gt;(Arrays.asList(primarySources));</span><br><span class="line">        //【1】这里是推断应用类型(deduce：推断，大家要有一点英文的基础)。在方法中会根据classload进行推断，然后再逐个根据WEB_ENVIRONMENT_CLASSES这个变量进行推断，最后发现是个servlet。</span><br><span class="line">        this.webApplicationType = deduceWebApplicationType();</span><br><span class="line">        //【2】【3】这里有两个方法：先getSpringFactoriesInstances，后setInitializers</span><br><span class="line">        //做了两件事：</span><br><span class="line">        //1、加载了所有的/META-INF/spring.factories文件中的类</span><br><span class="line">        //2、实例化6个接口，这6个接口是ApplicationContextInitializer的实现类，并放入到一个叫“initializers”的list中</span><br><span class="line">        setInitializers((Collection) getSpringFactoriesInstances(</span><br><span class="line">                ApplicationContextInitializer.class));</span><br><span class="line">        //【4】这个方法将所有的ApplicationListener的实现类实例化到一个list中。</span><br><span class="line">        //复用了上述的一个getSpringFactoriesInstances，这个类直接从cache中取/META-INF/spring.factories中的类。</span><br><span class="line">        setListeners((Collection) getSpringFactoriesInstances(ApplicationListener.class));</span><br><span class="line">        //【5】实例化当前的类</span><br><span class="line">        this.mainApplicationClass = deduceMainApplicationClass();</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<p>【1】：这个里面用到了ClassUtils.isPresent(String className, @Nullable ClassLoader classLoader),这个方法用来判断给定的classname是否能被classloader加载。由于classloader为Null，所以本流程走到最后返回的是servlet。顺便说一句，这里有reactive的返回结果，是响应式编程。<br>【2】：首先看下getSpringFactoriesInstances这个方法：<br><strong>这个方法结束后，把所有的/META-INF/spring.factories文件中的类加载进了缓存。</strong><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">//第438行：type-&gt;ApplicationContextInitializer类，parameterTypes-&gt;new Class&lt;?&gt;[]</span><br><span class="line">private &lt;T&gt; Collection&lt;T&gt; getSpringFactoriesInstances(Class&lt;T&gt; type,</span><br><span class="line">            Class&lt;?&gt;[] parameterTypes, Object... args) &#123;</span><br><span class="line">        //获取当前的classloader对象：AppClassLoader</span><br><span class="line">        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();</span><br><span class="line">        // Use names and ensure unique to protect against duplicates</span><br><span class="line">        //用给定的classLoader加载继承了ApplicationContextInitializer的工厂类。</span><br><span class="line">        //1、加载所有的/META-INF/spring.factories文件中的类，放入到一个LinkedMultiValueMap中，同时将这个map和对应的classloader放入到一个cache中，这个cache也是map</span><br><span class="line">        //2、返回result，从map中获取给定的类型对应的类，这里是ApplicationContextInitializer类。</span><br><span class="line">        //3、从最终结果来看，这个接口的6个实现类都加载到了这个叫“names”的LinkedHashSet中,如下图2-1</span><br><span class="line">        Set&lt;String&gt; names = new LinkedHashSet&lt;&gt;(</span><br><span class="line">                SpringFactoriesLoader.loadFactoryNames(type, classLoader));</span><br><span class="line">        //【2-1】这个方法很简单，就是实例化刚才到那几个实现了ApplicationContextInitializer接口的6个类，然后放入到一个list中返回。</span><br><span class="line">        List&lt;T&gt; instances = createSpringFactoriesInstances(type, parameterTypes,</span><br><span class="line">                classLoader, args, names);</span><br><span class="line">        //排序，根据Order。这个Comparator继承了OrderComparator</span><br><span class="line">        AnnotationAwareOrderComparator.sort(instances);</span><br><span class="line">        //最后返回排序结果。</span><br><span class="line">        return instances;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<p><img src="/images/init-classloader.png" alt="2-1"></p>
+<p>【2-1】createSpringFactoriesInstances方法，只是实例化刚才到6个类，<strong>这里可以学习下如何通过反射来实例化。</strong><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">private &lt;T&gt; List&lt;T&gt; createSpringFactoriesInstances(Class&lt;T&gt; type,</span><br><span class="line">            Class&lt;?&gt;[] parameterTypes, ClassLoader classLoader, Object[] args,</span><br><span class="line">            Set&lt;String&gt; names) &#123;</span><br><span class="line">        List&lt;T&gt; instances = new ArrayList&lt;&gt;(names.size());</span><br><span class="line">        for (String name : names) &#123;</span><br><span class="line">            try &#123;</span><br><span class="line">                Class&lt;?&gt; instanceClass = ClassUtils.forName(name, classLoader);</span><br><span class="line">                Assert.isAssignable(type, instanceClass);</span><br><span class="line">                Constructor&lt;?&gt; constructor = instanceClass</span><br><span class="line">                        .getDeclaredConstructor(parameterTypes);</span><br><span class="line">                T instance = (T) BeanUtils.instantiateClass(constructor, args);</span><br><span class="line">                instances.add(instance);</span><br><span class="line">            &#125;</span><br><span class="line">            catch (Throwable ex) &#123;</span><br><span class="line">                throw new IllegalArgumentException(</span><br><span class="line">                        &quot;Cannot instantiate &quot; + type + &quot; : &quot; + name, ex);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        return instances;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<p>【3】setInitializers方法(第1203行代码)：<br>这个方法比较简单，就是把刚才到ApplicationContextInitializer放入到一个initializers的List中。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line">     * Sets the &#123;@link ApplicationContextInitializer&#125; that will be applied to the Spring</span><br><span class="line">     * &#123;@link ApplicationContext&#125;.</span><br><span class="line">     * @param initializers the initializers to set</span><br><span class="line">     */</span><br><span class="line">    public void setInitializers(</span><br><span class="line">            Collection&lt;? extends ApplicationContextInitializer&lt;?&gt;&gt; initializers) &#123;</span><br><span class="line">        this.initializers = new ArrayList&lt;&gt;();</span><br><span class="line">        this.initializers.addAll(initializers);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<p>【4】spring运用RuntimeException().getStackTrace()推断出当前运行的类：本例是SampleBootstrap.class，并通过反射实例化。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">private Class&lt;?&gt; deduceMainApplicationClass() &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            StackTraceElement[] stackTrace = new RuntimeException().getStackTrace();</span><br><span class="line">            for (StackTraceElement stackTraceElement : stackTrace) &#123;</span><br><span class="line">                if (&quot;main&quot;.equals(stackTraceElement.getMethodName())) &#123;</span><br><span class="line">                    return Class.forName(stackTraceElement.getClassName());</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        catch (ClassNotFoundException ex) &#123;</span><br><span class="line">            // Swallow and continue</span><br><span class="line">        &#125;</span><br><span class="line">        return null;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<p><strong>到此为止，SpringApplication类实例化完成，这里总结下总共做了几件事情：</strong><br><strong>1、确定下应用的类型是servlet</strong><br><strong>2、加载了所有的/META-INF/spring.factories文件中的类</strong><br><strong>3、实例化了ApplicationContextInitializer的实现类</strong><br><strong>4、实例化了ApplicationListener的实现类</strong><br><strong>5、确定了当前运行的类，并实例化通过反射。</strong></p>
+<hr>
+<h2 id="关于-SpringBootApplication注解"><a href="#关于-SpringBootApplication注解" class="headerlink" title="关于@SpringBootApplication注解"></a>关于@SpringBootApplication注解</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">@SpringBootApplication</span><br><span class="line">    |--@ComponentScan</span><br><span class="line">    |--@SpringBootConfiguration</span><br><span class="line">    |--@EnableAutoConfiguration</span><br><span class="line">        |--@Import(AutoConfigurationImportSelector.class)</span><br></pre></td></tr></table></figure>
+<p>我们可以看到，这个注解，内部其实是这三个注解的组合。我们依次来分析这个注解的作用。</p>
+    </div>
+  </div>
+  
+    <div class="copy-right">
+      <div class="markdown-body">
+        <blockquote>
+        
+        
+          本文作者 : braveheart <br>
+        
+        原文链接 : <a href>https://zhangjun075.github.io/passages/springboot启动分析/</a><br>
+        版权声明 : 本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！
+        </blockquote>
+      </div>
+    </div>
+  
+  
+  
+    <div class="social-share" style="margin-top: -2rem" data-wechat-qrcode-title="<p>微信扫一扫</p>" data-wechat-qrcode-helper="<p>微信右上角, 扫一扫分享</p>" data-sites="qzone, qq, weibo, wechat, douban, google, facebook, twitter">
+  <span style="color: #6b7487; font-size: 1.4rem;">分享到: </span>
+</div>
+<script src="https://cdn.bootcss.com/social-share.js/1.0.16/js/social-share.min.js" async></script>
+  
+
+  
+    <div id="reward">
+  
+    <p id="reward-meta">知识 & 情怀 | 二者兼得</p>
+  
+  <button id="reward-btn">
+    
+    <span>打赏</span>
+  </button>
+  <div id="reward-qrcode">
+    
+      <div class="reward-qrcode--container">
+        <img class="qrcode-img" src="/images/wechat.jpeg" alt="微信扫一扫, 向我打赏">
+        <p class="qrcode-meta">微信扫一扫, 向我打赏</p>
+      </div>
+    
+      <div class="reward-qrcode--container">
+        <img class="qrcode-img" src="/images/alipay.jpeg" alt="支付宝扫一扫, 向我打赏">
+        <p class="qrcode-meta">支付宝扫一扫, 向我打赏</p>
+      </div>
+    
+  </div>
+
+</div>
+
+<script>
+  (() => {
+    let button = document.querySelector('#reward-btn'),
+      qrcode = document.querySelector('#reward-qrcode'),
+      display = false;
+    
+    button.addEventListener('click', () => {
+      qrcode.style.display = display ? 'none' : 'block'
+      display = !display
+    }, false)
+  })()
+</script>
+  
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+      <span>
+        
+          <i class="iconfont icon-06tags"></i>标签: 
+          
+          <span class="span--tag">
+            <a href="/tags/springboot/">
+              #springboot
+            </a>
+          </span>
+          
+          <span class="span--tag">
+            <a href="/tags/java/">
+              #java
+            </a>
+          </span>
+          
+        
+      </span>
+    </div>
+    <div class="article-meta pull-right">
+    </div>
+  </div>
+</div>
+
+
+  <aside id="sidebar">
+    <p id="sidebar-header"></p>
+    <ol id="sidebar-toc"></ol>
+  </aside>
+  <script async>setTimeout(generateToc, 10);</script>
+
+
+  <nav class="post-navigation">
+    
+      <div class="nav-pre">
+        <i class="iconfont icon-prev"></i>
+        上一篇:
+        <a href="/passages/tcpip协议/" target="_self">TCP/IP协议</a>
+      </div>
+    
+    
+  </nav>
+
+  
+    <a href="#comment" class="comment-anchor"></a>
+<div class="comment-title"><i class="iconfont icon-footprint"></i> 留下足迹 <i class="iconfont icon-footprint"></i></div>
+<div id="vcomments"></div>
+
+<script defer>
+  if( true ) {
+    let path = getRealPath()
+    new Valine({
+      el: "#vcomments",
+      appId: "H0sCeFINa0aDIvbbOEYfuqfg-gzGzoHsz",
+      appKey: "S2OVNK2kyv8uRWbENAcD3i4p",
+      notify: false,
+      verify: false,
+      avatar: "robohash",
+      placeholder: "正确填写邮箱, 才能及时收到回复哦♪(^∇^*)",
+      path
+    });
+  }
+</script>
+   
+
+  
+    <script defer>
+const valineAPI = (() => {
+  try {
+    AV.init("H0sCeFINa0aDIvbbOEYfuqfg-gzGzoHsz", "S2OVNK2kyv8uRWbENAcD3i4p");
+  } catch(error) {}
+  const isExist = (identity) => {
+    identity = identity || getRealPath();
+    let query = new AV.Query('Timer');
+    return new Promise((resolve, reject) => {
+      query.equalTo("identity", identity);
+      query.find().then(results => {
+        resolve(results.length > 0);
+      }, error => reject(error));
+    })
+  }
+
+  const _get = (identity) => {
+    let query = null;
+    if(identity && identity instanceof Array){
+      let querys = [];
+      for(let i = 0; i < identity.length; ++i) {
+        querys[i] = new AV.Query('Timer');
+        querys[i].equalTo('identity', identity[i]);
+      }
+      query = AV.Query.or.apply(null ,querys);
+    } else {
+      identity = identity || getRealPath();
+      query = new AV.Query("Timer");
+      query.equalTo("identity", identity);
+    }
+
+    return new Promise((resolve, reject) => {
+      query.find()
+      .then(results => resolve(results))
+      .catch(error => reject(error))
+    })
+  }
+
+  const create = (identity) => {
+    identity = identity || getRealPath();
+    return new Promise((resolve, reject) => {
+      let Todo = AV.Object.extend('Timer');
+      let todo = new Todo();
+      todo.set("times", 1);
+      todo.set("identity", identity);
+      todo.save().then(res => resolve(true), error => reject(error));
+    })
+  }
+
+  const update = (identity) => {
+    identity = identity || getRealPath();
+    return new Promise((resolve, reject) => {
+      let query = new AV.Query('Timer');
+      query.equalTo("identity", identity);
+      query.find().then(todos => {
+        todos.forEach(todo => {
+          todo.set("times", todo.attributes.times + 1);
+        });
+        return AV.Object.saveAll(todos);
+      }).then(todos => resolve(true), error => reject(error));
+    })
+  }
+
+  return {
+    isExist,
+    _get,
+    update,
+    create
+  }
+})()
+
+const calcAndWriteTimes = () => {
+  let isPost = true;
+
+  let timerAllDOM = document.querySelectorAll(".article-timer");
+
+  if(isPost) {
+    let identity = timerAllDOM[0].getAttribute("data-identity");
+    valineAPI.isExist(identity)
+    .then(exist => {
+      if(exist) {
+        return valineAPI.update(identity);
+      }
+      return new Promise(resolve => resolve(true));
+    })
+    .then( succuess => valineAPI._get(identity))
+    .then( result => timerAllDOM[0].innerText = result[0].attributes.times)
+    .catch(error => console.log(error.message))
+    return ;
+  }
+
+  let timerDOMCache = {};
+
+  for(let timerDOM of timerAllDOM) {
+    let identity = timerDOM.getAttribute("data-identity");
+    if(timerDOMCache.hasOwnProperty(identity)){
+      timerDOMCache[identity].dom.push(timerDOM);
+    }else{
+      timerDOMCache[identity] = {
+        dom: [timerDOM],
+        times: undefined
+      };
+    }
+  }
+
+  let identities = Object.keys(timerDOMCache);
+  valineAPI._get(identities).then(results => {
+    for(let result of results) {
+      let {identity, times} = result.attributes;
+      timerDOMCache[identity].times = times;
+      timerDOMCache[identity].dom.map(item => item.innerText = times);
+    }
+    for(let identity of identities) {
+      if(timerDOMCache[identity].times){
+        continue;
+      }
+      timerDOMCache[identity].dom.map(item => item.innerText = 1);
+      valineAPI.create(identity);
+    }
+  }).catch(error => console.log(error.message))
+}
+
+if(true){
+  calcAndWriteTimes();
+}
+</script>
+   
+
+</div>
+
+
+      <footer>
+  <p class="site-info">
+    博客已萌萌哒运行<span id="time-to-now"></span><span class="my-face">(●'◡'●)ﾉ♥</span>
+    <br>
+     Powered by <a href="http://zhangjun075.github.io">zhangjun075</a>
+    <br>
+    
+      <a href="https://www.google.com/analytics/" target="_blank">Google Analytics</a>提供统计服务
+    
+  </p>
+</footer>
+
+
+
+<script>
+const timeToNowDOM = document.querySelector("#time-to-now");
+const startTimestamp = new Date(2019, 3, 19).getTime();
+
+const updateTimeStr = () => {
+  let offset = parseInt(
+      (new Date().getTime() - startTimestamp) / 1000,
+      10
+    ),
+    day = Math.floor(offset / 86400),
+    hour = Math.floor((offset % 86400) / 3600),
+    minute = Math.floor(((offset % 86400) % 3600) / 60),
+    second = Math.floor(((offset % 86400) % 3600) % 60);
+  timeToNowDOM.innerHTML =
+    day + "天" + hour + "小时" + minute + "分钟" + second + "秒";
+  setTimeout(updateTimeStr, 500);
+}
+
+setTimeout(updateTimeStr, 500);
+</script>
+
+
+      <div class="back-to-top hidden">
+  <span>
+    <i class="iconfont icon-60"></i><span></span>%
+  </span>
+</div>
+
+<script>
+const updateIconToTop = percent => {
+  let dom = document.querySelector(".back-to-top span span");
+  dom.innerText = percent;
+  if(percent < 1) {
+    document.querySelector(".back-to-top").className = "back-to-top hidden";
+  } else {
+    document.querySelector(".back-to-top").className = "back-to-top";
+  }
+}
+
+const handleScoll = () => {
+  let isRunning = false;
+  return () => {
+    if (isRunning) return;
+    isRunning = true;
+    window.requestAnimationFrame(timestamp => {
+      let scrollTop =
+          document.documentElement.scrollTop || document.body.scrollTop,
+        scrollHeight =
+          document.documentElement.scrollHeight ||
+          document.body.scrollHeight,
+        clientHeight =
+          document.documentElement.clientHeight ||
+          document.body.clientHeight;
+      isRunning = false;
+      if (scrollTop <= 1) {
+        updateIconToTop(0);
+        return;
+      }
+      if (scrollTop + clientHeight >= scrollHeight) {
+        updateIconToTop(100);
+      } else {
+        updateIconToTop(parseInt(
+          100 * scrollTop / (scrollHeight - clientHeight),
+          10
+        ));
+      }
+    });
+  };
+}
+
+const backToTop = () => {
+  let scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop,
+    delay = 10,
+    time = 200;
+  if (scrollTop <= 20) {
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    return;
+  }
+  let step = Math.ceil(scrollTop * delay / time);
+  let timer = setInterval(() => {
+    scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop;
+    if (scrollTop - step <= 0) {
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      clearInterval(timer);
+    } else {
+      document.documentElement.scrollTop = scrollTop - step;
+      document.body.scrollTop = scrollTop - step;
+    }
+  }, delay);
+}
+
+document.addEventListener("scroll", handleScoll(), false);
+
+document.querySelector(".back-to-top").addEventListener("click", backToTop, false);
+
+</script>
+
+    </div>
+
+    
+      <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML" async></script>
+<script>
+  (() => {
+    const mathjaxConfig = {
+      showProcessingMessages: false, //关闭js加载过程信息
+      messageStyle: "none", //不显示信息
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [["$", "$"], ["\\(", "\\)"]], //行内公式选择符
+        displayMath: [["$$", "$$"], ["\\[", "\\]"]], //段内公式选择符
+        skipTags: ["script", "noscript", "style", "textarea", "pre", "code", "a"] //避开某些标签
+      },
+      "HTML-CSS": {
+        availableFonts: ["STIX", "TeX"], //可选字体
+        showMathMenu: false //关闭右击菜单显示
+      }
+    }
+
+    let mathjaxInterval = setInterval(() => {
+      if(!window.MathJax){
+        return;
+      }
+      window.MathJax.Hub.Config(mathjaxConfig)
+      window.MathJax.Hub.Queue(["Typeset", MathJax.Hub, document.getElementById('app')])
+
+      clearInterval(mathjaxInterval)
+    }, 10)    
+  })()
+</script>
+    
+
+    <script src="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.js" async></script>
+<script async>
+  let fancyTimer = setInterval(function(){
+    if(!window.$){
+      return;
+    }
+    $(document).ready(function() {
+      $(".post img").each(function () {
+        if($(this).parent().get(0).tagName.toLowerCase() === "a") {
+          return;
+        }
+        // $(this).attr("data-fancybox", "gallery"); // if you add 'data-fancybox', img will display after showed
+        var element = document.createElement("a");
+        $(element).attr("data-fancybox", "gallery");
+        $(element).attr("href", $(this).attr("src"));
+        $(this).wrap(element);
+      });
+      
+      clearInterval(fancyTimer);
+    });
+  }, 10);
+</script>
+
+    
+  </body>
+
+</html>

@@ -8,12 +8,12 @@
   
   
   
-  <title>技术人员严谨性 | braveheart-博客</title>
+  <title>ArrayBlockingQueue源码解析 | braveheart-博客</title>
 
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
   
-    <meta name="keywords" content="其他,杂谈,">
+    <meta name="keywords" content="java,java,jdk源码,ArrayBlockingQueue,">
   
 
   <script>
@@ -205,24 +205,24 @@
 
 <div class="post">
   <h1 class="article-title">
-    <span>技术人员严谨性</span>
+    <span>ArrayBlockingQueue源码解析</span>
   </h1>
   <div class="article-top-meta">
     <span>
       发布 : 
-      2019-04-23
+      2019-04-24
     </span>
     
       <span>
         分类 : 
-          <a href="/categories/其他/">
-            其他
+          <a href="/categories/java/">
+            java
           </a>
       </span>
     
     
       <span>
-        浏览 : <span class="article-timer" data-identity="技术人员严谨性"></span>
+        浏览 : <span class="article-timer" data-identity="ArrayBlockingQueue源码解析"></span>
       </span>
     
   </div>
@@ -231,14 +231,13 @@
 
   <div class="article-content">
     <div class="markdown-body">
-      <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>最近在搭建一些框架和解决一些技术问题的时候，上网去查一些文章解决问题，发现几个问题：<br>1、google/baidu搜索出来的文章基本都是雷同，只是换了个网址而已。<br>2、很多文章就是把官网的翻译下。<br>3、雷同的文章，里面明显是有问题的，但是事实就摆在那里，没有看到任何的解决方案。</p>
-<p>&emsp;&emsp;这几点给我的感触比较深，你浪费那么多时间写了一篇文章，复制粘贴不是时间么？难道仅仅为了表现下自己的勤奋学习态度？不知道现在互联网很发达么，google或者百度一下子都出来了么？</p>
-<h2 id="关于严谨"><a href="#关于严谨" class="headerlink" title="关于严谨"></a>关于严谨</h2><p>&emsp;&emsp;以上发现的问题，其中有一点可能会让人很郁闷，就是你奔着一个问题去查，然后发现，在文章的某一步骤，那个问题就会出现，而网络上你根据关键字搜索出来的文章可能十几篇，在那一步骤，人家就顺利进行下去了。最终我得出的结论是：这些人压根没有自己去实践。只是看看，然后转载或者抄袭下。</p>
-<p>&emsp;&emsp;这个是极其不严谨的。你写出来的东西，对别人没有一点帮助。对自己来说可能也会是永远的一个误区，因为你没有实践，你知道的知识就是错误的。所以写不如不写。</p>
-<p>&emsp;&emsp;这让我想到了学术论文的查重，还有前段时间的翟天临事件。你身处事外，可能不会有所感触，当你某天成为局中人，你可能感受就不一样了。论文的抄袭，可能会涉及学术不端的问题。人家辛辛苦苦的研究成功，最后被你直接不加思考的抄袭，这个在某种意义上来说就是学术剽窃。当然，写技术博客没那么严重，但是如果没有自己的想法和思考，没有自己去实践，写出来的意义又是什么？</p>
-<p>&emsp;&emsp;作为一名技术人员，我觉得几点我们必须要做到：<br>1、严谨性：做任何事情需要严谨，不能似懂非懂，装懂。不懂就是不懂。不懂就去弄懂<br>2、勤奋：不是抄袭或者copy几篇文章就证明你在学习，你很勤奋。这个不说明什么，属于自欺欺人。任何知识不可能不花时间就能成为你的。一分耕耘一分收获。勤奋是时间和汗水的并集。</p>
-<p>这里我举几个例子：前段时间在实践promethus监控springboot的时候，grafana面板配置实践的时候，没有“s”秒的单位肯定会报错，我搜索了下网上的所有文章，基本90%都没有写这个问题怎么解决，都是千篇一律的抄了某一篇，但是按照这些文章运行就是会报错，跑不起来。试问，这些作者，你们真的去实践了么？</p>
-<h2 id="态度决定一切"><a href="#态度决定一切" class="headerlink" title="态度决定一切"></a>态度决定一切</h2><p>做一个严谨的人，用勤奋踏实的态度去对待每个一细节和问题。送给大家。</p>
+      <h2 id="核心点"><a href="#核心点" class="headerlink" title="核心点"></a>核心点</h2><p>ArrayBlockingQueue的继承关系：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ArrayBlockingQueue</span>&lt;<span class="title">E</span>&gt; <span class="keyword">extends</span> <span class="title">AbstractQueue</span>&lt;<span class="title">E</span>&gt;</span></span><br><span class="line"><span class="class">        <span class="keyword">implements</span> <span class="title">BlockingQueue</span>&lt;<span class="title">E</span>&gt;, <span class="title">java</span>.<span class="title">io</span>.<span class="title">Serializable</span></span></span><br></pre></td></tr></table></figure></p>
+<p>继承Queue，实现了BlockingQueue的方法。</p>
+<p>这款queue的核心是一个object数组。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/** The queued items */</span></span><br><span class="line">    <span class="keyword">final</span> Object[] items;</span><br></pre></td></tr></table></figure></p>
+<p>第二个核心是一个cas实现的锁。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/** Main lock guarding all access */</span></span><br><span class="line">    <span class="keyword">final</span> ReentrantLock lock;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/** Condition for waiting takes */</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Condition notEmpty;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/** Condition for waiting puts */</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Condition notFull;</span><br></pre></td></tr></table></figure></p>
+<p>就下图这些东西。<br><img src="/images/blockqueue.png" alt></p>
+<h2 id="源码分析"><a href="#源码分析" class="headerlink" title="源码分析"></a>源码分析</h2><p>这里分析下入对和出队<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">put</span><span class="params">(E e)</span> <span class="keyword">throws</span> InterruptedException </span>&#123;</span><br><span class="line">        <span class="comment">//这里是校验</span></span><br><span class="line">        Objects.requireNonNull(e);</span><br><span class="line">        <span class="comment">//获取锁</span></span><br><span class="line">        <span class="keyword">final</span> ReentrantLock lock = <span class="keyword">this</span>.lock;</span><br><span class="line">        <span class="comment">//加锁        </span></span><br><span class="line">        lock.lockInterruptibly();</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="comment">//如果这个时候队列满的，那么就无限循环，等待被唤醒。这个时候出让cpu资源</span></span><br><span class="line">            <span class="keyword">while</span> (count == items.length)</span><br><span class="line">                notFull.await();</span><br><span class="line">            <span class="comment">//退出循环了，这个时候开始入队列操作</span></span><br><span class="line">            enqueue(e);</span><br><span class="line">        &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">            lock.unlock();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Inserts element at current put position, advances, and signals.</span></span><br><span class="line"><span class="comment">     * Call only when holding lock.</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">enqueue</span><span class="params">(E e)</span> </span>&#123;</span><br><span class="line">        <span class="comment">// assert lock.isHeldByCurrentThread();</span></span><br><span class="line">        <span class="comment">// assert lock.getHoldCount() == 1;</span></span><br><span class="line">        <span class="comment">// assert items[putIndex] == null;</span></span><br><span class="line">        <span class="comment">//指针引用</span></span><br><span class="line">        <span class="keyword">final</span> Object[] items = <span class="keyword">this</span>.items;</span><br><span class="line">        <span class="comment">//添加元素</span></span><br><span class="line">        items[putIndex] = e;</span><br><span class="line">        <span class="comment">//判断是否满，满的话，下标指到第一个元素。</span></span><br><span class="line">        <span class="keyword">if</span> (++putIndex == items.length) putIndex = <span class="number">0</span>;</span><br><span class="line">        count++;</span><br><span class="line">        <span class="comment">//唤醒notEmpty.await(),这个await应该是get的时候去判断是否空，如果空的话，就等元素入队列</span></span><br><span class="line">        notEmpty.signal();</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<p>出队列差不多。是个相反的过程。哦，对了，出队列，原来的下标对应的置空，便于gc回收。</p>
     </div>
   </div>
   
@@ -249,7 +248,7 @@
         
           本文作者 : braveheart <br>
         
-        原文链接 : <a href>https://zhangjun075.github.io/passages/技术人员严谨性/</a><br>
+        原文链接 : <a href>https://zhangjun075.github.io/passages/ArrayBlockingQueue源码解析/</a><br>
         版权声明 : 本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！
         </blockquote>
       </div>
@@ -309,8 +308,20 @@
           <i class="iconfont icon-06tags"></i>标签: 
           
           <span class="span--tag">
-            <a href="/tags/杂谈/">
-              #杂谈
+            <a href="/tags/java/">
+              #java
+            </a>
+          </span>
+          
+          <span class="span--tag">
+            <a href="/tags/jdk源码/">
+              #jdk源码
+            </a>
+          </span>
+          
+          <span class="span--tag">
+            <a href="/tags/ArrayBlockingQueue/">
+              #ArrayBlockingQueue
             </a>
           </span>
           
@@ -335,13 +346,13 @@
       <div class="nav-pre">
         <i class="iconfont icon-prev"></i>
         上一篇:
-        <a href="/passages/mysql之docker启动方式/" target="_self">mysql之docker启动方式</a>
+        <a href="/passages/技术人员严谨性/" target="_self">技术人员严谨性</a>
       </div>
     
     
       <div class="nav-next">
         下一篇:
-        <a href="/passages/ArrayBlockingQueue源码解析/" target="_self">ArrayBlockingQueue源码解析</a>
+        <a href="/passages/StringBuffer和StringBuilder分析/" target="_self">StringBuffer和StringBuilder分析</a>
         <i class="iconfont icon-next"></i>
       </div>
     

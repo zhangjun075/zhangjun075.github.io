@@ -8,12 +8,12 @@
   
   
   
-  <title>AnnotationAwareOrderComparator类分析 | braveheart-博客</title>
+  <title>springboot启动分析(三) | braveheart-博客</title>
 
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
   
-    <meta name="keywords" content="spring,java,spring,">
+    <meta name="keywords" content="springboot,java,springboot,">
   
 
   <script>
@@ -205,24 +205,24 @@
 
 <div class="post">
   <h1 class="article-title">
-    <span>AnnotationAwareOrderComparator类分析</span>
+    <span>springboot启动分析(三)</span>
   </h1>
   <div class="article-top-meta">
     <span>
       发布 : 
-      2019-04-25
+      2019-05-10
     </span>
     
       <span>
         分类 : 
-          <a href="/categories/spring/">
-            spring
+          <a href="/categories/springboot/">
+            springboot
           </a>
       </span>
     
     
       <span>
-        浏览 : <span class="article-timer" data-identity="AnnotationAwareOrderComparator类分析"></span>
+        浏览 : <span class="article-timer" data-identity="springboot启动分析-三"></span>
       </span>
     
   </div>
@@ -231,15 +231,52 @@
 
   <div class="article-content">
     <div class="markdown-body">
-      <h2 id="解析"><a href="#解析" class="headerlink" title="解析"></a>解析</h2><p><strong>类继承了OrderComparator</strong><br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">AnnotationAwareOrderComparator</span> <span class="keyword">extends</span> <span class="title">OrderComparator</span> </span>&#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+      <h2 id="SpringBootApplication"><a href="#SpringBootApplication" class="headerlink" title="@SpringBootApplication"></a>@SpringBootApplication</h2><p><strong>主要是如下三个注解：</strong></p>
 <ul>
-<li><p>属性就一个，该对象的实例</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//public static final AnnotationAwareOrderComparator INSTANCE = new AnnotationAwareOrderComparator();</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> AnnotationAwareOrderComparator INSTANCE = <span class="keyword">new</span> AnnotationAwareOrderComparator();</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>剩下的都是静态方法<br>这个方法的每一行都比较清晰。通过这个方法能学到不少东西：<br>1、对于类，我们能通过OrderUtils.getOrder((Class&lt;?&gt;) obj)获取<br>2、对于注解类型，我们能通过AnnotationUtils.getAnnotation来获取注解内容。<br>3、方法，我们通过AnnotationUtils.findAnnotation((Method) obj, Order.class);获取。大家可以自行实验下。</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line">    <span class="meta">@Nullable</span></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> Integer <span class="title">findOrder</span><span class="params">(Object obj)</span> </span>&#123;</span><br><span class="line">        <span class="comment">// Check for regular Ordered interface</span></span><br><span class="line">        Integer order = <span class="keyword">super</span>.findOrder(obj);</span><br><span class="line">        <span class="keyword">if</span> (order != <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> order;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Check for @Order and @Priority on various kinds of elements</span></span><br><span class="line">        <span class="keyword">if</span> (obj <span class="keyword">instanceof</span> Class) &#123;</span><br><span class="line">            <span class="keyword">return</span> OrderUtils.getOrder((Class&lt;?&gt;) obj);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> <span class="keyword">if</span> (obj <span class="keyword">instanceof</span> Method) &#123;</span><br><span class="line">            Order ann = AnnotationUtils.findAnnotation((Method) obj, Order.class);</span><br><span class="line">            <span class="keyword">if</span> (ann != <span class="keyword">null</span>) &#123;</span><br><span class="line">                <span class="keyword">return</span> ann.value();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> <span class="keyword">if</span> (obj <span class="keyword">instanceof</span> AnnotatedElement) &#123;</span><br><span class="line">            Order ann = AnnotationUtils.getAnnotation((AnnotatedElement) obj, Order.class);</span><br><span class="line">            <span class="keyword">if</span> (ann != <span class="keyword">null</span>) &#123;</span><br><span class="line">                <span class="keyword">return</span> ann.value();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> &#123;</span><br><span class="line">            order = OrderUtils.getOrder(obj.getClass());</span><br><span class="line">            <span class="keyword">if</span> (order == <span class="keyword">null</span> &amp;&amp; obj <span class="keyword">instanceof</span> DecoratingProxy) &#123;</span><br><span class="line">                order = OrderUtils.getOrder(((DecoratingProxy) obj).getDecoratedClass());</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> order;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<li>SpringBootConfiguration</li>
+<li>EnableAutoConfiguration</li>
+<li>ComponentScan</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Target</span>(ElementType.TYPE)</span><br><span class="line"><span class="meta">@Retention</span>(RetentionPolicy.RUNTIME)</span><br><span class="line"><span class="meta">@Documented</span></span><br><span class="line"><span class="meta">@Inherited</span></span><br><span class="line"><span class="meta">@SpringBootConfiguration</span></span><br><span class="line"><span class="meta">@EnableAutoConfiguration</span></span><br><span class="line"><span class="meta">@ComponentScan</span>(excludeFilters = &#123;</span><br><span class="line">        <span class="meta">@Filter</span>(type = FilterType.CUSTOM, classes = TypeExcludeFilter.class),</span><br><span class="line">        <span class="meta">@Filter</span>(type = FilterType.CUSTOM, classes = AutoConfigurationExcludeFilter.class) &#125;)</span><br><span class="line"><span class="keyword">public</span> <span class="meta">@interface</span> SpringBootApplication &#123;</span><br></pre></td></tr></table></figure>
+<h2 id="SpringBootConfiguration"><a href="#SpringBootConfiguration" class="headerlink" title="@SpringBootConfiguration"></a>@SpringBootConfiguration</h2><p><strong>这个注解的核心就是@Configuration</strong><br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Target</span>(ElementType.TYPE)</span><br><span class="line"><span class="meta">@Retention</span>(RetentionPolicy.RUNTIME)</span><br><span class="line"><span class="meta">@Documented</span></span><br><span class="line"><span class="meta">@Configuration</span></span><br><span class="line"><span class="keyword">public</span> <span class="meta">@interface</span> SpringBootConfiguration &#123;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="EnableAutoConfiguration"><a href="#EnableAutoConfiguration" class="headerlink" title="@EnableAutoConfiguration"></a>@EnableAutoConfiguration</h2><p><strong>主要用了@Import注解</strong></p>
+<ul>
+<li>核心类：AutoConfigurationImportSelector<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Target</span>(ElementType.TYPE)</span><br><span class="line"><span class="meta">@Retention</span>(RetentionPolicy.RUNTIME)</span><br><span class="line"><span class="meta">@Documented</span></span><br><span class="line"><span class="meta">@Inherited</span></span><br><span class="line"><span class="meta">@AutoConfigurationPackage</span></span><br><span class="line"><span class="meta">@Import</span>(AutoConfigurationImportSelector.class)</span><br><span class="line"><span class="keyword">public</span> <span class="meta">@interface</span> EnableAutoConfiguration &#123;</span><br><span class="line"></span><br><span class="line">    String ENABLED_OVERRIDE_PROPERTY = <span class="string">"spring.boot.enableautoconfiguration"</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Exclude specific auto-configuration classes such that they will never be applied.</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@return</span> the classes to exclude</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    Class&lt;?&gt;[] exclude() <span class="keyword">default</span> &#123;&#125;;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Exclude specific auto-configuration class names such that they will never be</span></span><br><span class="line"><span class="comment">     * applied.</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@return</span> the class names to exclude</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@since</span> 1.3.0</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    String[] excludeName() <span class="keyword">default</span> &#123;&#125;;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 </li>
 </ul>
+<h3 id="Import注解"><a href="#Import注解" class="headerlink" title="@Import注解"></a>@Import注解</h3><p>Import注解一般和{@link Configuration}, {@link ImportSelector}, {@link ImportBeanDefinitionRegistrar}这些一起使用。</p>
+<p>我们来看看官方解释：</p>
+<ul>
+<li>用来import一个或者多个用@Configuration注解的class类。</li>
+<li>可以用来导入ImportSelector、ImportBeanDefinitionRegistrar接口的实现类,参照AnnotationConfigApplicationContext#register</li>
+</ul>
+<p>Import这个导入注解是自动装配的核心。</p>
+<p><strong>TIPS:注解的使用说明：</strong></p>
+<ul>
+<li>@Target：这个用于说明注解使用的地方<ul>
+<li>TYPE: 作用于类，接口，或者枚举</li>
+<li>FIELD: 作用于属性申明</li>
+<li>METHOD: 作用于方法的申明</li>
+<li>PARAMETER: 作用于参数申明</li>
+<li>。。。。。</li>
+</ul>
+</li>
+<li>@Retention：生效时间<ul>
+<li>SOURCE：存在于源码阶段，编译阶段丢弃。</li>
+<li>CLASS：编译器会编译成二进制文件保存在class文件中，但是运行时虚拟机中不会保留，这是默认的方式。</li>
+<li>RUNTIME：class文件，运行时虚拟机中都会保留。</li>
+</ul>
+</li>
+</ul>
+<h3 id="AutoConfigurationImportSelector"><a href="#AutoConfigurationImportSelector" class="headerlink" title="AutoConfigurationImportSelector"></a>AutoConfigurationImportSelector</h3><p>这个类实现类6个接口：<br>1、DeferredImportSelector<br>2、BeanClassLoaderAware<br>3、ResourceLoaderAware<br>4、BeanFactoryAware<br>5、EnvironmentAware<br>6、Ordered</p>
+<p>说明下Aware的作用，这个中间件的作用就是容器的回调接口。实现了对应的Aware接口，能从spring容器中获取对应的资源。打个比方实现了BeanFactoryAware接口，能获取容器中加载所有类对象的beanFactory:ConfigurableListableBeanFactory。</p>
+<h4 id="DeferredImportSelector"><a href="#DeferredImportSelector" class="headerlink" title="DeferredImportSelector"></a>DeferredImportSelector</h4><p>实现了ImportSelector接口。这个实现类，在所有Configuration注解类执行完毕后运行。</p>
+<h4 id="BeanClassLoaderAware"><a href="#BeanClassLoaderAware" class="headerlink" title="BeanClassLoaderAware"></a>BeanClassLoaderAware</h4><p>获取上下文的BeanClassLoader对象。</p>
+<h4 id="ResourceLoaderAware"><a href="#ResourceLoaderAware" class="headerlink" title="ResourceLoaderAware"></a>ResourceLoaderAware</h4><p>实现这个接口，能获取容器中所有的资源的处理器。我们看下ResourceLoader有哪些方法：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">Resource <span class="title">getResource</span><span class="params">(String location)</span></span>;</span><br><span class="line"><span class="meta">@Nullable</span></span><br><span class="line"><span class="function">ClassLoader <span class="title">getClassLoader</span><span class="params">()</span></span>;</span><br></pre></td></tr></table></figure></p>
+<p>第一个方法就是获取资源对象。也就是所有的内外部加载的resource对象。这个对象能获取所有的资源信息。<br>第二个方法是获取加载ResourceLoader的ClassLoader对象。</p>
+<h4 id="BeanFactoryAware"><a href="#BeanFactoryAware" class="headerlink" title="BeanFactoryAware"></a>BeanFactoryAware</h4><p>获取ConfigurableListableBeanFactory对象。</p>
+<h4 id="EnvironmentAware"><a href="#EnvironmentAware" class="headerlink" title="EnvironmentAware"></a>EnvironmentAware</h4><p>获取Environment对象。</p>
+<h4 id="Ordered"><a href="#Ordered" class="headerlink" title="Ordered"></a>Ordered</h4><p>在Servlet启动加载对象的时候，数值越小，优先级越高。</p>
     </div>
   </div>
   
@@ -250,7 +287,7 @@
         
           本文作者 : braveheart <br>
         
-        原文链接 : <a href>https://zhangjun075.github.io/passages/AnnotationAwareOrderComparator类分析/</a><br>
+        原文链接 : <a href>https://zhangjun075.github.io/passages/springboot启动分析-三/</a><br>
         版权声明 : 本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！
         </blockquote>
       </div>
@@ -316,8 +353,8 @@
           </span>
           
           <span class="span--tag">
-            <a href="/tags/spring/">
-              #spring
+            <a href="/tags/springboot/">
+              #springboot
             </a>
           </span>
           
@@ -342,15 +379,9 @@
       <div class="nav-pre">
         <i class="iconfont icon-prev"></i>
         上一篇:
-        <a href="/passages/springboot启动分析-(二)/" target="_self">springboot启动分析(二)</a>
+        <a href="/passages/AnnotationAwareOrderComparator类分析/" target="_self">AnnotationAwareOrderComparator类分析</a>
       </div>
     
-    
-      <div class="nav-next">
-        下一篇:
-        <a href="/passages/springboot启动分析-三/" target="_self">springboot启动分析(三)</a>
-        <i class="iconfont icon-next"></i>
-      </div>
     
   </nav>
 
